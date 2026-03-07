@@ -89,7 +89,7 @@ def main():
     # 6. Операции с плавающей точкой IEEE-754
     print_separator()
     print("6. ОПЕРАЦИИ С ЧИСЛАМИ С ПЛАВАЮЩЕЙ ТОЧКОЙ (IEEE-754)")
-    a, b = 3.14, 2.71
+    a, b = 31.4, -2.71
 
     # Сложение
     result = ops.ieee_add(a, b)
@@ -151,3 +151,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
