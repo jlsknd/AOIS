@@ -83,8 +83,7 @@
 |-------|------------|----------------|-----------------|
 | `decimal_to_bcd()` | Преобразование в BCD | `num` - десятичное число | Массив битов в BCD |
 | `bcd_to_decimal()` | Преобразование из BCD | `bcd_array` - массив битов | Десятичное число |
-| `add()` | Сложение в BCD | `num1`, `num2` - числа | Словарь с результатом |
-| `subtract()` | Вычитание в BCD | `num1`, `num2` - числа | Словарь с результатом |
+| `add()` | Сложение в BCD | `num1`, `num2` - числа | Словарь с результатом |я
 | `bcd_array_to_string()` | Преобразование BCD в строку | `bcd_array` - массив битов | Строка вида "0001 0010 0011" |
 
 ### 5. Класс `ArithmeticOperations` (arithmetic_operations.py)
@@ -103,7 +102,6 @@
 | `ieee_multiply()` | Умножение IEEE-754 | `num1`, `num2` | Результат с проверкой |
 | `ieee_divide()` | Деление IEEE-754 | `num1`, `num2` | Результат с проверкой |
 | `bcd_add()` | Сложение BCD | `num1`, `num2` | Результат с проверкой |
-| `bcd_subtract()` | Вычитание BCD | `num1`, `num2` | Результат с проверкой |
 
 ---
 
@@ -111,18 +109,18 @@
 
 ### Общая статистика
 
-| Файл с тестами | Количество тестов | Что проверяет |
-|----------------|-------------------|---------------|
-| `test_binary_converter.py` | 8 | Базовые преобразования между кодами |
-| `test_fixed_point.py` | 12 | Арифметические операции с целыми числами |
-| `test_ieee754.py` | 11 | Операции с плавающей точкой |
-| `test_bcd_converter.py` | 8 | Операции в BCD |
-| `test_arithmetic_operations.py` | 12 | Комплексные операции с проверкой |
-| **ИТОГО** | **51** | |
+| Файл с тестами | Что проверяет |
+|----------------|---------------|
+| `test_binary_converter.py` | Базовые преобразования между кодами |
+| `test_fixed_point.py` | Арифметические операции с целыми числами |
+| `test_ieee754.py` | Операции с плавающей точкой |
+| `test_bcd_converter.py` | Операции в BCD |
+| `test_arithmetic_operations.py`  | Комплексные операции с проверкой |
+
 
 ### Детальное описание тестов
 
-#### test_binary_converter.py (8 тестов)
+#### test_binary_converter.py (12 тестов)
 
 | Название теста | Что проверяет |
 |----------------|---------------|
@@ -133,7 +131,10 @@
 | `test_to_direct_code` | Получение прямого кода |
 | `test_to_reverse_code_positive` | Получение обратного кода для положительного числа |
 | `test_to_reverse_code_negative` | Получение обратного кода для отрицательного числа |
+| `test_to_additional_code_positive` | Получение дополнительного кода для положительного числа |
 | `test_to_additional_code_negative` | Получение дополнительного кода для отрицательного числа |
+| `test_additional_to_decimal_positive` | Перевод из дополнительного кода в прямой для положительного числа |
+| `test_additional_to_decimal_negative` | Перевод из дополнительного кода в прямой для отрицательного числа |
 
 #### test_fixed_point.py (12 тестов)
 
@@ -152,7 +153,7 @@
 | `test_divide_direct_negative` | Деление с отрицательным результатом |
 | `test_divide_by_zero` | Проверка деления на ноль |
 
-#### test_ieee754.py (11 тестов)
+#### test_ieee754.py (10 тестов)
 
 | Название теста | Что проверяет |
 |----------------|---------------|
@@ -167,7 +168,7 @@
 | `test_infinity` | Проверка представления бесконечности |
 | `test_nan` | Проверка представления NaN |
 
-#### test_bcd_converter.py (8 тестов)
+#### test_bcd_converter.py (6 тестов)
 
 | Название теста | Что проверяет |
 |----------------|---------------|
@@ -176,11 +177,10 @@
 | `test_add_no_carry` | Сложение без переноса |
 | `test_add_with_carry` | Сложение с переносом |
 | `test_add_with_multiple_carries` | Сложение с несколькими переносами |
-| `test_subtract_no_borrow` | Вычитание без займа |
-| `test_subtract_with_borrow` | Вычитание с займом |
-| `test_subtract_negative_result` | Проверка на отрицательный результат |
+| `test_add_edge_cases` | Ошибки в крайних ситуациях |
 
-#### test_arithmetic_operations.py (12 тестов)
+
+#### test_arithmetic_operations.py (9 тестов)
 
 | Название теста | Что проверяет |
 |----------------|---------------|
@@ -190,12 +190,10 @@
 | `test_multiply_direct_with_verification` | Проверка умножения с верификацией |
 | `test_divide_direct_with_verification` | Проверка деления с верификацией |
 | `test_ieee_add_with_verification` | Проверка IEEE сложения |
-| `test_ieee_subtract_with_verification` | Проверка IEEE вычитания |
 | `test_ieee_multiply_with_verification` | Проверка IEEE умножения |
 | `test_ieee_divide_with_verification` | Проверка IEEE деления |
 | `test_bcd_add_with_verification` | Проверка BCD сложения |
-| `test_bcd_subtract_with_verification` | Проверка BCD вычитания |
-| `test_edge_cases` | Проверка граничных случаев |
+
 
 
 
