@@ -10,7 +10,6 @@ from minimization import Minimization
 
 
 def main():
-    print("=" * 70)
     print("Лабораторная работа 2: Построение СКНФ и СДНФ на основании таблиц истинности")
     print("=" * 70)
     
@@ -37,33 +36,22 @@ def main():
     print(f"\nПеременные: {variables}")
     print(f"AST: {ast}")
     
-    # Построение таблицы истинности
+    # Таблица истинности
     truth_table = TruthTable(variables, ast, eval_func)
     print("\nТАБЛИЦА ИСТИННОСТИ:")
     truth_table.print_table()
     
     # Нормальные формы
     forms = NormalForms(truth_table)
-    
-    sdnf = forms.get_sdnf()
-    sknf = forms.get_sknf()
     print(f"\n{'='*70}")
     print("НОРМАЛЬНЫЕ ФОРМЫ:")
     print(f"{'='*70}")
-    print(f"СДНФ: {sdnf}")
-    print(f"СКНФ: {sknf}")
-    
-    # Числовая форма
-    num_sdnf = forms.get_numeric_form_sdnf()
-    num_sknf = forms.get_numeric_form_sknf()
-    print(f"\nЧисловая форма СДНФ: {num_sdnf}")
-    print(f"Числовая форма СКНФ: {num_sknf}")
-    
-    # Индексная форма
-    index_form = forms.get_index_form()
-    print(f"\nИндексная форма функции: {index_form} (десятичная)")
-    vector = truth_table.get_vector()
-    print(f"Вектор функции: {vector}")
+    print(f"СДНФ: {forms.get_sdnf()}")
+    print(f"СКНФ: {forms.get_sknf()}")
+    print(f"\nЧисловая форма СДНФ: {forms.get_numeric_form_sdnf()}")
+    print(f"Числовая форма СКНФ: {forms.get_numeric_form_sknf()}")
+    print(f"\nИндексная форма функции: {forms.get_index_form()} (десятичная)")
+    print(f"Вектор функции: {truth_table.get_vector()}")
     
     # Классы Поста
     post = PostClasses(truth_table)
@@ -72,26 +60,21 @@ def main():
     print("КЛАССЫ ПОСТА:")
     print(f"{'='*70}")
     for class_name, belongs in classes.items():
-        desc = ""
-        if class_name == 'T0':
-            desc = "сохраняет 0"
-        elif class_name == 'T1':
-            desc = "сохраняет 1"
-        elif class_name == 'S':
-            desc = "самодвойственная"
-        elif class_name == 'M':
-            desc = "монотонная"
-        elif class_name == 'L':
-            desc = "линейная"
+        desc = {
+            'T0': 'сохраняет 0',
+            'T1': 'сохраняет 1',
+            'S': 'самодвойственная',
+            'M': 'монотонная',
+            'L': 'линейная'
+        }.get(class_name, '')
         print(f"  {class_name} ({desc}): {'Да' if belongs else 'Нет'}")
     
     # Полином Жегалкина
     zhegalkin = ZhegalkinPolynomial(truth_table)
-    polynomial = zhegalkin.get_polynomial()
     print(f"\n{'='*70}")
     print("ПОЛИНОМ ЖЕГАЛКИНА:")
     print(f"{'='*70}")
-    print(f"  {polynomial}")
+    print(f"  {zhegalkin.get_polynomial()}")
     
     # Фиктивные переменные
     dummy_finder = DummyVariablesFinder(truth_table)
@@ -101,36 +84,80 @@ def main():
     print(f"{'='*70}")
     print(f"  {dummy_vars if dummy_vars else 'Нет фиктивных переменных'}")
     
-    # Булева дифференциация
+    # Булевы производные
     derivative = BooleanDerivative(truth_table)
     derivatives = derivative.get_derivative_table()
     print(f"\n{'='*70}")
     print("БУЛЕВЫ ПРОИЗВОДНЫЕ:")
     print(f"{'='*70}")
-    for key, value in derivatives.items():
-        print(f"  {key}:")
-        print(f"    Вектор: {value['vector']}")
-        print(f"    Функция: {value['function']}")
     
-    # Минимизация (теперь методы сами выводят этапы)
+    print("\nЧастные производные:")
+    for var in variables:
+        key = f"∂f/∂{var}"
+        if key in derivatives:
+            d = derivatives[key]
+            print(f"  {key}:")
+            print(f"    Вектор: {d['vector']}")
+            print(f"    Функция: {d['xor_form']}")
+    
+    if len(variables) >= 2:
+        print("\nСмешанные производные (2-го порядка):")
+        for i, var1 in enumerate(variables):
+            for var2 in variables[i+1:]:
+                key = f"∂²f/∂{var1}∂{var2}"
+                if key in derivatives:
+                    d = derivatives[key]
+                    print(f"  {key}:")
+                    print(f"    Вектор: {d['vector']}")
+                    print(f"    Функция: {d['xor_form']}")
+    
+    if len(variables) >= 3:
+        print("\nСмешанные производные (3-го порядка):")
+        for i, var1 in enumerate(variables):
+            for j, var2 in enumerate(variables[i+1:], i+1):
+                for var3 in variables[j+1:]:
+                    key = f"∂³f/∂{var1}∂{var2}∂{var3}"
+                    if key in derivatives:
+                        d = derivatives[key]
+                        print(f"  {key}:")
+                        print(f"    Вектор: {d['vector']}")
+                        print(f"    Функция: {d['xor_form']}")
+    
+    # ========== МИНИМИЗАЦИЯ ==========
     minimizer = Minimization(truth_table)
     
-    # Расчетный метод
-    result_calc, _ = minimizer.minimization_calculated()
-    
-    # Расчетно-табличный метод
-    result_table, _, _ = minimizer.minimization_table()
-    
-    # Карта Карно
-    result_karnaugh, _ = minimizer.minimization_karnaugh()
-    
+    # --- ДНФ ---
     print(f"\n{'='*70}")
-    print("ИТОГОВЫЕ РЕЗУЛЬТАТЫ МИНИМИЗАЦИИ:")
+    print("МИНИМИЗАЦИЯ ДНФ (дизъюнктивной нормальной формы):")
     print(f"{'='*70}")
-    print(f"  Расчетный метод: {result_calc}")
-    print(f"  Расчетно-табличный метод: {result_table}")
-    print(f"  Карта Карно: {result_karnaugh}")
+    result_calc_dnf, _ = minimizer.minimization_calculated()
+    result_table_dnf, _, _ = minimizer.minimization_table()
+    result_karnaugh_dnf, _ = minimizer.minimization_karnaugh()
+    print(f"\nРезультаты минимизации ДНФ:")
+    print(f"  Расчетный метод: {result_calc_dnf}")
+    print(f"  Расчетно-табличный метод: {result_table_dnf}")
+    print(f"  Карта Карно: {result_karnaugh_dnf}")
+    
+        # --- КНФ ---
+    print(f"\n{'='*70}")
+    print("МИНИМИЗАЦИЯ КНФ (конъюнктивной нормальной формы):")
     print(f"{'='*70}")
+
+# 1. Расчетный метод
+    result_calc_cnf, _ = minimizer.minimization_calculated_cnf()
+
+# 2. Расчетно-табличный метод
+    result_table_cnf, _, _ = minimizer.minimization_table_cnf()
+
+# 3. Карта Карно
+    result_karnaugh_cnf, _ = minimizer.minimization_karnaugh_cnf()
+
+    print(f"\nРезультаты минимизации КНФ:")
+    print(f"  Расчетный метод: {result_calc_cnf}")
+    print(f"  Расчетно-табличный метод: {result_table_cnf}")
+    print(f"  Карта Карно: {result_karnaugh_cnf}")
+
+    print(f"\n{'='*70}")
 
 
 if __name__ == "__main__":
