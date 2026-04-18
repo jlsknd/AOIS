@@ -13,6 +13,7 @@ class Minimization:
         self.on_sets = truth_table.get_on_sets()
         self.n = len(self.variables)
 
+    # ---------- Вспомогательные методы ----------
     def _assignment_to_binary(self, assignment):
         return ''.join([str(int(assignment[var])) for var in self.variables])
 
@@ -103,6 +104,7 @@ class Minimization:
                 conditions.append(f"{self.variables[i]}=1")
         return ", ".join(conditions)
 
+    # ---------- Внутренние методы получения простых импликант ----------
     def _get_prime_implicants(self, verbose=False):
         current_impls = [self._assignment_to_binary(a) for a in self.on_sets]
         if not current_impls:
@@ -212,7 +214,7 @@ class Minimization:
             print(f"  {', '.join(result_terms)}")
         return all_implicants
 
-    # удаление лишних импликант
+    # ---------- Удаление лишних импликант ----------
     def _remove_redundant_implicants_with_output(self, implicants):
         if not implicants or not self.on_sets:
             return implicants
@@ -264,6 +266,7 @@ class Minimization:
                 print(f"  {impl_disp} = 0, когда {self._get_condition(impl)} - лишний")
         return essential if essential else implicants
 
+    # ---------- Публичные методы для ДНФ ----------
     def minimization_calculated(self):
         print("\n" + "=" * 70)
         print("РАСЧЕТНЫЙ МЕТОД (МЕТОД КВАЙНА) ДЛЯ ДНФ")
@@ -321,6 +324,7 @@ class Minimization:
         print(f"  {result}")
         return result, core_implicants, cover_table
 
+    # ---------- Публичные методы для КНФ ----------
     def minimization_calculated_cnf(self):
         print("\n" + "=" * 70)
         print("РАСЧЕТНЫЙ МЕТОД ДЛЯ КНФ (МЕТОД КВАЙНА)")
@@ -379,13 +383,13 @@ class Minimization:
         print(f"  {result}")
         return result, core_implicants, cover_table
 
-    # карно для днф
+    # ---------- Карты Карно для ДНФ ----------
     def minimization_karnaugh(self):
         print("\n" + "=" * 70)
         print("ТАБЛИЧНЫЙ МЕТОД ДЛЯ ДНФ (КАРТА КАРНО)")
         print("=" * 70)
         
-        
+        # Обработка константных функций
         if self.n == 1:
             if len(self.on_sets) == 0:
                 return "0", []
@@ -460,7 +464,7 @@ class Minimization:
         print(f"  {result}")
         return result, k_map
 
-    # кнф
+    # ---------- Карты Карно для КНФ ----------
     def minimization_karnaugh_cnf(self):
         print("\n" + "=" * 70)
         print("ТАБЛИЧНЫЙ МЕТОД ДЛЯ КНФ (КАРТА КАРНО)")
@@ -468,7 +472,7 @@ class Minimization:
         
         off_sets = self.truth_table.get_off_sets()
         
-        
+        # Обработка константных функций
         if self.n == 1:
             if len(off_sets) == 0:
                 return "1", []
@@ -549,7 +553,7 @@ class Minimization:
         print(f"  {result}")
         return result, k_map
 
-    # -карно 2-4
+    # ---------- Построение карт Карно (2-4 переменные) ----------
     def _build_karnaugh_2(self):
         k_map = [[0,0],[0,0]]
         for a in self.on_sets:
@@ -612,7 +616,7 @@ class Minimization:
         print(f"{self.variables[0]}{self.variables[1]}=11    {k_map[2][0]}       {k_map[2][1]}       {k_map[2][2]}       {k_map[2][3]}")
         print(f"{self.variables[0]}{self.variables[1]}=10    {k_map[3][0]}       {k_map[3][1]}       {k_map[3][2]}       {k_map[3][3]}")
 
-    # -карно-5
+    # ---------- Карты Карно для 5 переменных (таблица 4x8) ----------
     def _build_karnaugh_5(self):
         """Строит карту Карно 4x8 для 5 переменных (ab - строки, cde - столбцы, код Грея)"""
         k_map = [[0,0,0,0,0,0,0,0] for _ in range(4)]
@@ -679,7 +683,7 @@ class Minimization:
                 print(f"{k_map[i][j]}\t", end="")
             print()
 
-    # 5 перем
+    # ---------- Поиск прямоугольников для 5 переменных ----------
     def _get_all_rectangles_5(self, k_map):
         """Находит все возможные прямоугольники в карте 4x8"""
         rows, cols = 4, 8
@@ -712,7 +716,7 @@ class Minimization:
                                 rectangles.append(cells)
         return rectangles
 
-    # 5 перем
+    # ---------- Минимальное покрытие для 5 переменных ----------
     def _minimal_cover_exact_5(self, cells, rectangles):
         """Находит минимальное покрытие для 5 переменных"""
         if not cells:
@@ -752,7 +756,7 @@ class Minimization:
         
         return cover
 
-    
+    # ---------- Преобразование группы в терм для 5 переменных (ДНФ) ----------
     def _group_to_dnf_term_5(self, group):
         """Преобразует группу клеток в терм ДНФ для 5 переменных"""
         if not group:
@@ -847,7 +851,7 @@ class Minimization:
             return "1"
         return " & ".join(parts)
 
-
+    # ---------- Преобразование группы в дизъюнкт для 5 переменных (КНФ) ----------
     def _group_to_cnf_term_5(self, group):
         """Преобразует группу клеток в дизъюнкт КНФ для 5 переменных"""
         if not group:
@@ -885,7 +889,7 @@ class Minimization:
             return "0"
         return "(" + "|".join(parts) + ")"
 
-  
+    # ---------- Общие методы для карт Карно (2-4 переменные) ----------
     def _get_all_rectangles(self, k_map):
         rows = len(k_map)
         cols = len(k_map[0])
