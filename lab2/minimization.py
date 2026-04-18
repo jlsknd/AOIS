@@ -13,7 +13,7 @@ class Minimization:
         self.on_sets = truth_table.get_on_sets()
         self.n = len(self.variables)
 
-    # ---------- Вспомогательные методы ----------
+    # вспомогательные методы
     def _assignment_to_binary(self, assignment):
         return ''.join([str(int(assignment[var])) for var in self.variables])
 
@@ -104,7 +104,7 @@ class Minimization:
                 conditions.append(f"{self.variables[i]}=1")
         return ", ".join(conditions)
 
-    # ---------- Внутренние методы получения простых импликант ----------
+    # получение простых импликант
     def _get_prime_implicants(self, verbose=False):
         current_impls = [self._assignment_to_binary(a) for a in self.on_sets]
         if not current_impls:
@@ -214,7 +214,7 @@ class Minimization:
             print(f"  {', '.join(result_terms)}")
         return all_implicants
 
-    # ---------- Удаление лишних импликант ----------
+    # удаление лишних импликант
     def _remove_redundant_implicants_with_output(self, implicants):
         if not implicants or not self.on_sets:
             return implicants
@@ -266,7 +266,7 @@ class Minimization:
                 print(f"  {impl_disp} = 0, когда {self._get_condition(impl)} - лишний")
         return essential if essential else implicants
 
-    # ---------- Публичные методы для ДНФ ----------
+    # методы для днф
     def minimization_calculated(self):
         print("\n" + "=" * 70)
         print("РАСЧЕТНЫЙ МЕТОД (МЕТОД КВАЙНА) ДЛЯ ДНФ")
@@ -324,7 +324,7 @@ class Minimization:
         print(f"  {result}")
         return result, core_implicants, cover_table
 
-    # ---------- Публичные методы для КНФ ----------
+    # для кнф
     def minimization_calculated_cnf(self):
         print("\n" + "=" * 70)
         print("РАСЧЕТНЫЙ МЕТОД ДЛЯ КНФ (МЕТОД КВАЙНА)")
@@ -387,9 +387,9 @@ class Minimization:
         print("\n" + "=" * 70)
         print("ТАБЛИЧНЫЙ МЕТОД ДЛЯ ДНФ (КАРТА КАРНО)")
         print("=" * 70)
-        # Обработка константных функций
+        # обработка константных функций
         if self.n == 1:
-            # Функция от одной переменной
+            # функция от одной переменной
             if len(self.on_sets) == 0:
                 return "0", []
             elif len(self.on_sets) == 2:
@@ -400,7 +400,7 @@ class Minimization:
                 return f"!{self.variables[0]}", []
         if self.n not in (2,3,4):
             return "Метод Карно поддерживается для 2-4 переменных", []
-        # Построение карты
+        # построение карты
         if self.n == 2:
             k_map = self._build_karnaugh_2()
             self._print_karnaugh_2(k_map)
@@ -410,20 +410,20 @@ class Minimization:
         else:
             k_map = self._build_karnaugh_4()
             self._print_karnaugh_4(k_map)
-        # Собираем все клетки с единицами
+        #  все клетки с единицами
         cells = [(i,j) for i in range(len(k_map)) for j in range(len(k_map[0])) if k_map[i][j]==1]
         if not cells:
             return "0", k_map
-        # Находим все прямоугольники
+        # ищем  прямоугольники
         rectangles = self._get_all_rectangles(k_map)
-        # Выбираем минимальное покрытие
+        # выбираем минимальное покрытие
         cover = self._minimal_cover_exact(cells, rectangles)
         print(f"\nВыделенные области (единицы):")
         terms = []
         for i, rect in enumerate(cover, 1):
             term = self._group_to_dnf_term(rect)
             if term:
-                # Убираем пробелы вокруг & для красоты
+                # убираем пробелы вокруг & (для красоты)
                 term = term.replace(" & ", "&")
                 terms.append(term)
                 print(f"  Область {i}: {self._group_description(rect)} => {term}")
@@ -436,7 +436,7 @@ class Minimization:
         print("\n" + "=" * 70)
         print("ТАБЛИЧНЫЙ МЕТОД ДЛЯ КНФ (КАРТА КАРНО)")
         print("=" * 70)
-        # Обработка константных функций
+        # обработка константных функций
         off_sets = self.truth_table.get_off_sets()
         if self.n == 1:
             if len(off_sets) == 0:
@@ -449,7 +449,7 @@ class Minimization:
                 return self.variables[0], []
         if self.n not in (2,3,4):
             return "Метод Карно поддерживается для 2-4 переменных", []
-        # Работаем с нулями
+        # работа с нулями
         original_on_sets = self.on_sets
         self.on_sets = off_sets
         if self.n == 2:
@@ -462,7 +462,7 @@ class Minimization:
             k_map = self._build_karnaugh_4()
             self._print_karnaugh_4(k_map)
         self.on_sets = original_on_sets
-        # Собираем все клетки с единицами (нулями функции)
+        # собираем все клетки с единицами (нулями функции)
         cells = [(i,j) for i in range(len(k_map)) for j in range(len(k_map[0])) if k_map[i][j]==1]
         if not cells:
             return "1", k_map
@@ -480,7 +480,7 @@ class Minimization:
         print(f"  {result}")
         return result, k_map
 
-    # ---------- Построение карт Карно ----------
+    # карты карно
     def _build_karnaugh_2(self):
         k_map = [[0,0],[0,0]]
         for a in self.on_sets:
@@ -594,7 +594,7 @@ class Minimization:
                 rect_masks.append(mask)
         if not rect_masks:
             return []
-        # Жадный для больших наборов
+        #  для больших наборов
         if len(rect_masks) > 30:
             uncovered = (1 << n) - 1
             cover = []
@@ -610,7 +610,7 @@ class Minimization:
                 cover.append(rectangles[best_idx])
                 uncovered &= ~rect_masks[best_idx]
             return cover
-        # Точный перебор
+        # точный перебор
         best = None
         best_size = n+1
         k = len(rect_masks)
