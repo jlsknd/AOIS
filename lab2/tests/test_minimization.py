@@ -322,7 +322,7 @@ class TestMinimization(unittest.TestCase):
         self.assertIn("a&b", result.replace(" ", ""))
         self.assertIn("a&c", result.replace(" ", ""))
         self.assertIn("b&c", result.replace(" ", ""))
-# Добавить в файл tests/test_minimization.py (после существующих тестов)
+
 
 import itertools
 
@@ -337,14 +337,12 @@ class TestMinimizationExtended(unittest.TestCase):
         variables, ast, f = self.parser.parse("a|b")
         tt = TruthTable(variables, ast, f)
         m = Minimization(tt)
-        # Карта 2x2 все единицы
+        
         k_map = [[1,1],[1,1]]
         rects = m._get_all_rectangles(k_map)
-        # Должны быть прямоугольники размеров: 1x1 (4 шт), 1x2 (2), 2x1 (2), 2x2 (1)
-        # Уникальных форм должно быть 9 (4+2+2+1 = 9)
-        # Но из-за циклических могут быть повторы, проверим количество
-        self.assertGreaterEqual(len(rects), 4)  # как минимум 4 одиночных
-        # Проверим, что есть прямоугольник 2x2
+       
+        self.assertGreaterEqual(len(rects), 4)  
+      
         full = [(0,0),(0,1),(1,0),(1,1)]
         self.assertTrue(any(set(r) == set(full) for r in rects))
 
@@ -352,11 +350,9 @@ class TestMinimizationExtended(unittest.TestCase):
         variables, ast, f = self.parser.parse("a&b&c")
         tt = TruthTable(variables, ast, f)
         m = Minimization(tt)
-        # Карта 2x4 с одной единицей
         k_map = [[0,0,0,0],[0,0,1,0]]
         rects = m._get_all_rectangles(k_map)
-        # Должны быть только одиночные прямоугольники (размер 1x1)
-        # Но могут быть и горизонтальные пары, если есть соседи (здесь нет)
+       
         self.assertTrue(any(len(r)==1 for r in rects))
 
     def test_get_all_rectangles_4x4(self):
@@ -366,7 +362,6 @@ class TestMinimizationExtended(unittest.TestCase):
         # Карта 4x4 все единицы
         k_map = [[1]*4 for _ in range(4)]
         rects = m._get_all_rectangles(k_map)
-        # Должен быть прямоугольник 4x4
         full = [(i,j) for i in range(4) for j in range(4)]
         self.assertTrue(any(set(r) == set(full) for r in rects))
         # Проверим, что есть прямоугольники 2x2, 1x4, 4x1 и т.д.
@@ -375,7 +370,7 @@ class TestMinimizationExtended(unittest.TestCase):
         self.assertIn(8, sizes)   # 2x4 или 4x2
         self.assertIn(4, sizes)
 
-    # ----- Тесты для _minimal_cover_exact -----
+   
     def test_minimal_cover_exact_simple(self):
         variables, ast, f = self.parser.parse("a&b")
         tt = TruthTable(variables, ast, f)
@@ -418,14 +413,12 @@ class TestMinimizationExtended(unittest.TestCase):
             covered.update(r)
         self.assertEqual(covered, set(cells))
 
-    # ----- Тесты для _group_to_dnf_term -----
+
     def test_group_to_dnf_term_2x2(self):
         variables, ast, f = self.parser.parse("a&b")
         tt = TruthTable(variables, ast, f)
         m = Minimization(tt)
-        # Группа из двух клеток по горизонтали: (0,0) и (0,1)
-        # В 2-переменной карте: строка 0 → a=0, столбцы 0→b=0, 1→b=1
-        # Группа даёт ¬a
+       
         group = [(0,0),(0,1)]
         term = m._group_to_dnf_term(group)
         self.assertEqual(term, "¬a")
@@ -454,17 +447,13 @@ class TestMinimizationExtended(unittest.TestCase):
         variables, ast, f = self.parser.parse("a&b&c&d")
         tt = TruthTable(variables, ast, f)
         m = Minimization(tt)
-        # Группа 2x2 в углу: строки 0-1, столбцы 0-1 → a=0,b=0,c=0,d=0? Нет, надо разобраться.
-        # В 4-переменной карте: строка 0: a=0,b=0; строка1: a=0,b=1; столбец0: c=0,d=0; столбец1: c=0,d=1.
-        # Группа 2x2 даст фиксированные a=0 (потому что строки 0 и 1 оба имеют a=0) и c=0 (столбцы 0 и 1 оба имеют c=0)
+     
         group = [(0,0),(0,1),(1,0),(1,1)]
         term = m._group_to_dnf_term(group)
         self.assertIn("¬a", term)
         self.assertIn("¬c", term)
-        # b и d меняются, поэтому не входят
 
-    # ----- Тесты для _group_to_cnf_term -----
-    def test_group_to_cnf_term_2x2(self):
+def test_group_to_cnf_term_2x2(self):
         variables, ast, f = self.parser.parse("a&b")
         tt = TruthTable(variables, ast, f)
         m = Minimization(tt)
@@ -495,7 +484,6 @@ class TestMinimizationExtended(unittest.TestCase):
         self.assertTrue("a" in term or "!a" in term)   # a без отрицания, потому что a=0
         self.assertTrue("c" in term or "!c" in term)
 
-    # ----- Тесты для karnaugh DNF и CNF на разных примерах -----
     def test_karnaugh_dnf_2var_cover_all_rects(self):
         variables, ast, f = self.parser.parse("a|b")
         tt = TruthTable(variables, ast, f)
@@ -557,13 +545,9 @@ class TestMinimizationExtended(unittest.TestCase):
         # Создадим искусственные импликанты для КНФ
         implicants = ["X00X", "0XX0", "X0X0"]
         essential = m._remove_redundant_implicants_cnf(implicants)
-        # Проверим, что метод не падает и возвращает список
         self.assertIsInstance(essential, list)
 
-    # ----- Тесты для karnaugh при n=2,3,4 с разными картами -----
-   
 
-    
 
    
     def test_karnaugh_cnf_2var_all_zeros(self):
@@ -573,7 +557,6 @@ class TestMinimizationExtended(unittest.TestCase):
         result, k_map = m.minimization_karnaugh_cnf()
         self.assertEqual(result, "0")  # всегда 0 → КНФ = 0
 
-    # ----- Тесты для _minimal_cover_exact с пустыми входными данными -----
     def test_minimal_cover_exact_empty_cells(self):
         variables, ast, f = self.parser.parse("a&b")
         tt = TruthTable(variables, ast, f)
@@ -588,7 +571,6 @@ class TestMinimizationExtended(unittest.TestCase):
         cover = m._minimal_cover_exact([(0,0)], [])
         self.assertEqual(cover, [])
 
-    # ----- Тесты для _get_all_rectangles с циклическими группами -----
     def test_get_all_rectangles_cyclic_3x4(self):
         variables, ast, f = self.parser.parse("a&b&c")
         tt = TruthTable(variables, ast, f)
@@ -601,7 +583,6 @@ class TestMinimizationExtended(unittest.TestCase):
         found = any(set(r) == set(cyclic) for r in rects)
         self.assertTrue(found)
 
-    # ----- Тесты для _group_to_dnf_term и _group_to_cnf_term с большими группами -----
     def test_group_to_dnf_term_full_4x4(self):
         variables, ast, f = self.parser.parse("a&b&c&d")
         tt = TruthTable(variables, ast, f)
