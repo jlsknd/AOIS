@@ -123,10 +123,10 @@ def main():
                         print(f"    Вектор: {d['vector']}")
                         print(f"    Функция: {d['xor_form']}")
     
-    # ========== МИНИМИЗАЦИЯ ==========
+    # МИНИМИЗАЦИЯ 
     minimizer = Minimization(truth_table)
     
-    # --- ДНФ ---
+    #ДНФ
     print(f"\n{'='*70}")
     print("МИНИМИЗАЦИЯ ДНФ (дизъюнктивной нормальной формы):")
     print(f"{'='*70}")
@@ -138,20 +138,13 @@ def main():
     print(f"  Расчетно-табличный метод: {result_table_dnf}")
     print(f"  Карта Карно: {result_karnaugh_dnf}")
     
-        # --- КНФ ---
+        # КНФ
     print(f"\n{'='*70}")
     print("МИНИМИЗАЦИЯ КНФ (конъюнктивной нормальной формы):")
     print(f"{'='*70}")
-
-# 1. Расчетный метод
     result_calc_cnf, _ = minimizer.minimization_calculated_cnf()
-
-# 2. Расчетно-табличный метод
     result_table_cnf, _, _ = minimizer.minimization_table_cnf()
-
-# 3. Карта Карно
     result_karnaugh_cnf, _ = minimizer.minimization_karnaugh_cnf()
-
     print(f"\nРезультаты минимизации КНФ:")
     print(f"  Расчетный метод: {result_calc_cnf}")
     print(f"  Расчетно-табличный метод: {result_table_cnf}")
