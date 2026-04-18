@@ -13,7 +13,6 @@ class Minimization:
         self.on_sets = truth_table.get_on_sets()
         self.n = len(self.variables)
 
-    # вспомогательные методы
     def _assignment_to_binary(self, assignment):
         return ''.join([str(int(assignment[var])) for var in self.variables])
 
@@ -104,7 +103,6 @@ class Minimization:
                 conditions.append(f"{self.variables[i]}=1")
         return ", ".join(conditions)
 
-    # получение простых импликант
     def _get_prime_implicants(self, verbose=False):
         current_impls = [self._assignment_to_binary(a) for a in self.on_sets]
         if not current_impls:
@@ -266,7 +264,6 @@ class Minimization:
                 print(f"  {impl_disp} = 0, когда {self._get_condition(impl)} - лишний")
         return essential if essential else implicants
 
-    # методы для днф
     def minimization_calculated(self):
         print("\n" + "=" * 70)
         print("РАСЧЕТНЫЙ МЕТОД (МЕТОД КВАЙНА) ДЛЯ ДНФ")
@@ -324,7 +321,6 @@ class Minimization:
         print(f"  {result}")
         return result, core_implicants, cover_table
 
-    # для кнф
     def minimization_calculated_cnf(self):
         print("\n" + "=" * 70)
         print("РАСЧЕТНЫЙ МЕТОД ДЛЯ КНФ (МЕТОД КВАЙНА)")
@@ -383,13 +379,14 @@ class Minimization:
         print(f"  {result}")
         return result, core_implicants, cover_table
 
+    # карно для днф
     def minimization_karnaugh(self):
         print("\n" + "=" * 70)
         print("ТАБЛИЧНЫЙ МЕТОД ДЛЯ ДНФ (КАРТА КАРНО)")
         print("=" * 70)
-        # обработка константных функций
+        
+        
         if self.n == 1:
-            # функция от одной переменной
             if len(self.on_sets) == 0:
                 return "0", []
             elif len(self.on_sets) == 2:
@@ -398,9 +395,41 @@ class Minimization:
                 return self.variables[0], []
             else:
                 return f"!{self.variables[0]}", []
+        
+        # Для 5 переменных
+        if self.n == 5:
+            k_map = self._build_karnaugh_5()
+            self._print_karnaugh_5(k_map)
+            
+            cells = []
+            for i in range(4):
+                for j in range(8):
+                    if k_map[i][j] == 1:
+                        cells.append((i, j))
+            
+            if not cells:
+                return "0", k_map
+            
+            rectangles = self._get_all_rectangles_5(k_map)
+            cover = self._minimal_cover_exact_5(cells, rectangles)
+            
+            print(f"\nВыделенные области (единицы):")
+            terms = []
+            for i, rect in enumerate(cover, 1):
+                term = self._group_to_dnf_term_5(rect)
+                if term:
+                    term = term.replace(" & ", "&")
+                    terms.append(term)
+                    print(f"  Область {i}: группа из {len(rect)} клеток => {term}")
+            result = " ∨ ".join(sorted(terms))
+            print(f"\nМинимизированная ДНФ:")
+            print(f"  {result}")
+            return result, k_map
+        
         if self.n not in (2,3,4):
-            return "Метод Карно поддерживается для 2-4 переменных", []
-        # построение карты
+            return "Метод Карно поддерживается для 2-5 переменных", []
+        
+        # Для 2-4 переменных
         if self.n == 2:
             k_map = self._build_karnaugh_2()
             self._print_karnaugh_2(k_map)
@@ -410,20 +439,19 @@ class Minimization:
         else:
             k_map = self._build_karnaugh_4()
             self._print_karnaugh_4(k_map)
-        #  все клетки с единицами
+        
         cells = [(i,j) for i in range(len(k_map)) for j in range(len(k_map[0])) if k_map[i][j]==1]
         if not cells:
             return "0", k_map
-        # ищем  прямоугольники
+        
         rectangles = self._get_all_rectangles(k_map)
-        # выбираем минимальное покрытие
         cover = self._minimal_cover_exact(cells, rectangles)
+        
         print(f"\nВыделенные области (единицы):")
         terms = []
         for i, rect in enumerate(cover, 1):
             term = self._group_to_dnf_term(rect)
             if term:
-                # убираем пробелы вокруг & (для красоты)
                 term = term.replace(" & ", "&")
                 terms.append(term)
                 print(f"  Область {i}: {self._group_description(rect)} => {term}")
@@ -432,12 +460,15 @@ class Minimization:
         print(f"  {result}")
         return result, k_map
 
+    # кнф
     def minimization_karnaugh_cnf(self):
         print("\n" + "=" * 70)
         print("ТАБЛИЧНЫЙ МЕТОД ДЛЯ КНФ (КАРТА КАРНО)")
         print("=" * 70)
-        # обработка константных функций
+        
         off_sets = self.truth_table.get_off_sets()
+        
+        
         if self.n == 1:
             if len(off_sets) == 0:
                 return "1", []
@@ -447,11 +478,46 @@ class Minimization:
                 return f"!{self.variables[0]}", []
             else:
                 return self.variables[0], []
+        
+        # Для 5 переменных
+        if self.n == 5:
+            original_on_sets = self.on_sets
+            self.on_sets = off_sets
+            k_map = self._build_karnaugh_5()
+            self._print_karnaugh_5(k_map)
+            self.on_sets = original_on_sets
+            
+            cells = []
+            for i in range(4):
+                for j in range(8):
+                    if k_map[i][j] == 1:
+                        cells.append((i, j))
+            
+            if not cells:
+                return "1", k_map
+            
+            rectangles = self._get_all_rectangles_5(k_map)
+            cover = self._minimal_cover_exact_5(cells, rectangles)
+            
+            print(f"\nВыделенные области (нули функции):")
+            terms = []
+            for i, rect in enumerate(cover, 1):
+                disjunct = self._group_to_cnf_term_5(rect)
+                if disjunct:
+                    terms.append(disjunct)
+                    print(f"  Область {i}: группа из {len(rect)} клеток => {disjunct}")
+            result = " & ".join(sorted(terms))
+            print(f"\nМинимизированная КНФ:")
+            print(f"  {result}")
+            return result, k_map
+        
         if self.n not in (2,3,4):
-            return "Метод Карно поддерживается для 2-4 переменных", []
-        # работа с нулями
+            return "Метод Карно поддерживается для 2-5 переменных", []
+        
+        # Для 2-4 переменных
         original_on_sets = self.on_sets
         self.on_sets = off_sets
+        
         if self.n == 2:
             k_map = self._build_karnaugh_2()
             self._print_karnaugh_2(k_map)
@@ -461,13 +527,16 @@ class Minimization:
         else:
             k_map = self._build_karnaugh_4()
             self._print_karnaugh_4(k_map)
+        
         self.on_sets = original_on_sets
-        # собираем все клетки с единицами (нулями функции)
+        
         cells = [(i,j) for i in range(len(k_map)) for j in range(len(k_map[0])) if k_map[i][j]==1]
         if not cells:
             return "1", k_map
+        
         rectangles = self._get_all_rectangles(k_map)
         cover = self._minimal_cover_exact(cells, rectangles)
+        
         print(f"\nВыделенные области (нули функции):")
         terms = []
         for i, rect in enumerate(cover, 1):
@@ -480,7 +549,7 @@ class Minimization:
         print(f"  {result}")
         return result, k_map
 
-    # карты карно
+    # -карно 2-4
     def _build_karnaugh_2(self):
         k_map = [[0,0],[0,0]]
         for a in self.on_sets:
@@ -543,6 +612,280 @@ class Minimization:
         print(f"{self.variables[0]}{self.variables[1]}=11    {k_map[2][0]}       {k_map[2][1]}       {k_map[2][2]}       {k_map[2][3]}")
         print(f"{self.variables[0]}{self.variables[1]}=10    {k_map[3][0]}       {k_map[3][1]}       {k_map[3][2]}       {k_map[3][3]}")
 
+    # -карно-5
+    def _build_karnaugh_5(self):
+        """Строит карту Карно 4x8 для 5 переменных (ab - строки, cde - столбцы, код Грея)"""
+        k_map = [[0,0,0,0,0,0,0,0] for _ in range(4)]
+        
+        # Порядок столбцов в коде Грея для cde
+        col_order = [
+            (0,0,0),  # 0: 000
+            (0,0,1),  # 1: 001
+            (0,1,1),  # 3: 011
+            (0,1,0),  # 2: 010
+            (1,1,0),  # 6: 110
+            (1,1,1),  # 7: 111
+            (1,0,1),  # 5: 101
+            (1,0,0)   # 4: 100
+        ]
+        
+        # Порядок строк в коде Грея для ab
+        row_order = [
+            (0,0),  # 0: 00
+            (0,1),  # 1: 01
+            (1,1),  # 3: 11
+            (1,0)   # 2: 10
+        ]
+        
+        for a in self.on_sets:
+            a_val = 1 if a[self.variables[0]] else 0
+            b_val = 1 if a[self.variables[1]] else 0
+            c_val = 1 if a[self.variables[2]] else 0
+            d_val = 1 if a[self.variables[3]] else 0
+            e_val = 1 if a[self.variables[4]] else 0
+            
+            # Находим индекс строки
+            for row_idx, (ra, rb) in enumerate(row_order):
+                if ra == a_val and rb == b_val:
+                    row = row_idx
+                    break
+            
+            # Находим индекс столбца
+            for col_idx, (rc, rd, re) in enumerate(col_order):
+                if rc == c_val and rd == d_val and re == e_val:
+                    col = col_idx
+                    break
+            
+            k_map[row][col] = 1
+        
+        return k_map
+
+    def _print_karnaugh_5(self, k_map):
+        """Выводит карту Карно 4x8 для 5 переменных"""
+        print(f"\nКарта Карно для {self.variables[0]}, {self.variables[1]}, {self.variables[2]}, {self.variables[3]}, {self.variables[4]}:")
+        
+        # Заголовки столбцов
+        col_headers = ["000", "001", "011", "010", "110", "111", "101", "100"]
+        print(f"\nab \\ cde\t", end="")
+        for h in col_headers:
+            print(f"{h}\t", end="")
+        print()
+        
+        # Строки
+        row_headers = ["00", "01", "11", "10"]
+        for i, row_header in enumerate(row_headers):
+            print(f"{row_header}\t", end="")
+            for j in range(8):
+                print(f"{k_map[i][j]}\t", end="")
+            print()
+
+    # 5 перем
+    def _get_all_rectangles_5(self, k_map):
+        """Находит все возможные прямоугольники в карте 4x8"""
+        rows, cols = 4, 8
+        rectangles = []
+        
+        # Все возможные размеры прямоугольников (степени двойки)
+        row_sizes = [1, 2, 4]
+        col_sizes = [1, 2, 4, 8]
+        
+        for h in row_sizes:
+            for w in col_sizes:
+                for r0 in range(rows):
+                    for c0 in range(cols):
+                        cells = []
+                        valid = True
+                        for dr in range(h):
+                            for dc in range(w):
+                                r = (r0 + dr) % rows
+                                c = (c0 + dc) % cols
+                                if k_map[r][c] == 1:
+                                    cells.append((r, c))
+                                else:
+                                    valid = False
+                                    break
+                            if not valid:
+                                break
+                        if valid and cells:
+                            cells.sort()
+                            if cells not in rectangles:
+                                rectangles.append(cells)
+        return rectangles
+
+    # 5 перем
+    def _minimal_cover_exact_5(self, cells, rectangles):
+        """Находит минимальное покрытие для 5 переменных"""
+        if not cells:
+            return []
+        
+        cell_index = {cell: i for i, cell in enumerate(cells)}
+        n = len(cells)
+        rect_masks = []
+        
+        for rect in rectangles:
+            mask = 0
+            for cell in rect:
+                if cell in cell_index:
+                    mask |= 1 << cell_index[cell]
+            if mask != 0:
+                rect_masks.append(mask)
+        
+        if not rect_masks:
+            return []
+        
+        # Жадный алгоритм
+        uncovered = (1 << n) - 1
+        cover = []
+        
+        while uncovered:
+            best_mask = 0
+            best_idx = -1
+            for i, mask in enumerate(rect_masks):
+                covered = bin(mask & uncovered).count('1')
+                if covered > best_mask:
+                    best_mask = covered
+                    best_idx = i
+            if best_idx == -1:
+                break
+            cover.append(rectangles[best_idx])
+            uncovered &= ~rect_masks[best_idx]
+        
+        return cover
+
+    
+    def _group_to_dnf_term_5(self, group):
+        """Преобразует группу клеток в терм ДНФ для 5 переменных"""
+        if not group:
+            return None
+        
+        # Порядок строк и столбцов
+        row_order = [(0,0), (0,1), (1,1), (1,0)]  # ab: 00,01,11,10
+        col_order = [
+            (0,0,0), (0,0,1), (0,1,1), (0,1,0),
+            (1,1,0), (1,1,1), (1,0,1), (1,0,0)
+        ]  # cde в коде Грея
+        
+        rows = set(p[0] for p in group)
+        cols = set(p[1] for p in group)
+        
+        parts = []
+        
+        # Переменные a, b
+        if len(rows) == 1:
+            r = next(iter(rows))
+            a_val, b_val = row_order[r]
+            if a_val == 0 and b_val == 0:
+                parts.append(f"¬{self.variables[0]} & ¬{self.variables[1]}")
+            elif a_val == 0 and b_val == 1:
+                parts.append(f"¬{self.variables[0]} & {self.variables[1]}")
+            elif a_val == 1 and b_val == 1:
+                parts.append(f"{self.variables[0]} & {self.variables[1]}")
+            else:  # (1,0)
+                parts.append(f"{self.variables[0]} & ¬{self.variables[1]}")
+        elif len(rows) == 2:
+            rows_list = sorted(rows)
+            if rows_list == [0,1]:
+                parts.append(f"¬{self.variables[0]}")
+            elif rows_list == [2,3]:
+                parts.append(self.variables[0])
+            elif rows_list == [0,3]:
+                parts.append(f"¬{self.variables[1]}")
+            elif rows_list == [1,2]:
+                parts.append(self.variables[1])
+        
+        # Переменные c, d, e
+        if len(cols) == 1:
+            c = next(iter(cols))
+            c_val, d_val, e_val = col_order[c]
+            if c_val == 0 and d_val == 0 and e_val == 0:
+                parts.append(f"¬{self.variables[2]} & ¬{self.variables[3]} & ¬{self.variables[4]}")
+            elif c_val == 0 and d_val == 0 and e_val == 1:
+                parts.append(f"¬{self.variables[2]} & ¬{self.variables[3]} & {self.variables[4]}")
+            elif c_val == 0 and d_val == 1 and e_val == 1:
+                parts.append(f"¬{self.variables[2]} & {self.variables[3]} & {self.variables[4]}")
+            elif c_val == 0 and d_val == 1 and e_val == 0:
+                parts.append(f"¬{self.variables[2]} & {self.variables[3]} & ¬{self.variables[4]}")
+            elif c_val == 1 and d_val == 1 and e_val == 0:
+                parts.append(f"{self.variables[2]} & {self.variables[3]} & ¬{self.variables[4]}")
+            elif c_val == 1 and d_val == 1 and e_val == 1:
+                parts.append(f"{self.variables[2]} & {self.variables[3]} & {self.variables[4]}")
+            elif c_val == 1 and d_val == 0 and e_val == 1:
+                parts.append(f"{self.variables[2]} & ¬{self.variables[3]} & {self.variables[4]}")
+            else:  # (1,0,0)
+                parts.append(f"{self.variables[2]} & ¬{self.variables[3]} & ¬{self.variables[4]}")
+        elif len(cols) == 2:
+            cols_list = sorted(cols)
+            # Определяем, какая переменная фиксирована
+            # Проверяем c
+            c_vals = set(col_order[c][0] for c in cols_list)
+            if len(c_vals) == 1:
+                if 0 in c_vals:
+                    parts.append(f"¬{self.variables[2]}")
+                else:
+                    parts.append(self.variables[2])
+            else:
+                # Проверяем d
+                d_vals = set(col_order[c][1] for c in cols_list)
+                if len(d_vals) == 1:
+                    if 0 in d_vals:
+                        parts.append(f"¬{self.variables[3]}")
+                    else:
+                        parts.append(self.variables[3])
+                else:
+                    # Проверяем e
+                    e_vals = set(col_order[c][2] for c in cols_list)
+                    if len(e_vals) == 1:
+                        if 0 in e_vals:
+                            parts.append(f"¬{self.variables[4]}")
+                        else:
+                            parts.append(self.variables[4])
+        elif len(cols) == 4:
+            # Все 4 столбца в одной группе по горизонтали
+            parts.append("1")
+        
+        if not parts:
+            return "1"
+        return " & ".join(parts)
+
+
+    def _group_to_cnf_term_5(self, group):
+        """Преобразует группу клеток в дизъюнкт КНФ для 5 переменных"""
+        if not group:
+            return None
+        
+        # Порядок строк и столбцов
+        row_order = [(0,0), (0,1), (1,1), (1,0)]
+        col_order = [
+            (0,0,0), (0,0,1), (0,1,1), (0,1,0),
+            (1,1,0), (1,1,1), (1,0,1), (1,0,0)
+        ]
+        
+        # Собираем значения для каждой переменной
+        values_per_var = [[] for _ in range(5)]
+        
+        for (row, col) in group:
+            a_val, b_val = row_order[row]
+            c_val, d_val, e_val = col_order[col]
+            values_per_var[0].append(a_val)
+            values_per_var[1].append(b_val)
+            values_per_var[2].append(c_val)
+            values_per_var[3].append(d_val)
+            values_per_var[4].append(e_val)
+        
+        parts = []
+        for idx in range(5):
+            if len(set(values_per_var[idx])) == 1:
+                val = values_per_var[idx][0]
+                if val == 0:
+                    parts.append(self.variables[idx])
+                else:
+                    parts.append(f"!{self.variables[idx]}")
+        
+        if not parts:
+            return "0"
+        return "(" + "|".join(parts) + ")"
+
+  
     def _get_all_rectangles(self, k_map):
         rows = len(k_map)
         cols = len(k_map[0])
@@ -578,7 +921,6 @@ class Minimization:
                             rectangles.append(cells)
         return rectangles
 
-   
     def _minimal_cover_exact(self, cells, rectangles):
         if not cells:
             return []
@@ -594,7 +936,7 @@ class Minimization:
                 rect_masks.append(mask)
         if not rect_masks:
             return []
-        #  для больших наборов
+        
         if len(rect_masks) > 30:
             uncovered = (1 << n) - 1
             cover = []
@@ -610,7 +952,7 @@ class Minimization:
                 cover.append(rectangles[best_idx])
                 uncovered &= ~rect_masks[best_idx]
             return cover
-        # точный перебор
+        
         best = None
         best_size = n+1
         k = len(rect_masks)
@@ -629,7 +971,6 @@ class Minimization:
             return [rectangles[i] for i in range(k) if best & (1 << i)]
         return []
 
-    
     def _group_to_dnf_term(self, group):
         if not group:
             return None
@@ -695,7 +1036,6 @@ class Minimization:
             return " & ".join(parts)
         return "1"
 
-   
     def _group_to_cnf_term(self, group):
         if not group:
             return None
