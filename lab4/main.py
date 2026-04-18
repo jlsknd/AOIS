@@ -13,7 +13,7 @@ from constants import TABLE_SIZE
 def print_menu():
     """Вывод меню программы"""
     print("\n" + "=" * 70)
-    print("         ЛАБОРАТОРНАЯ РАБОТА №6")
+    print("         ЛАБОРАТОРНАЯ РАБОТА №4")
     print("         ХЕШ-ТАБЛИЦА - МАТЕМАТИКА")
     print("         Линейный поиск (шаг q=3)")
     print("=" * 70)
