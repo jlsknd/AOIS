@@ -19,7 +19,7 @@ class ZhegalkinPolynomial:
         size = 2 ** n
         coeffs = self.vector.copy()
         
-        # Метод треугольника Паскаля
+        # метод треугольника Паскаля
         for i in range(size):
             for j in range(size):
                 if (j & i) == i and i != j:
